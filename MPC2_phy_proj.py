@@ -102,6 +102,7 @@ def atom_base_positions(type):
         
     elif type==1: #definitions for water (incomplete)
         d=0.09578 #O-H bond length in nm
+        #d=0.09745401671213969 #O-H bond length in nm
         p=1.85*3.3356e-30 #O-H dipole moment magnitude in SI units Cm 
         qeff=(p/(d*1e-9))/1.602e-19 #effective charge in units of e
         Na=3
