@@ -7,7 +7,8 @@ List of all the fucntions:
 
 import numpy as np #import the numpy package since this will be useful
 import matplotlib.pyplot as plt #plotting package
-
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 N=5
 e=1.602e-19 #in Coulombs
@@ -102,13 +103,13 @@ def atom_base_positions(type):
         
     elif type==1: #definitions for water (incomplete)
         d=0.09578 #O-H bond length in nm
-        #d=0.09745401671213969 #O-H bond length in nm
-        p=1.85*3.3356e-30 #O-H dipole moment magnitude in SI units Cm 
+        #d=0.09690722132882895 #O-H bond length in nm
+        p=1.85/2/np.cos(104.5/2/180*np.pi)*3.3356e-30 #O-H dipole moment magnitude in SI units Cm 
         qeff=(p/(d*1e-9))/1.602e-19 #effective charge in units of e
         Na=3
         r,phi,theta,q=np.empty(Na),np.empty(Na),np.empty(Na),np.empty(Na)
         r[0],phi[0],theta[0],q[0]=0.0,0.0  ,0.0   ,-2*qeff #place the O atom at the origin
-        r[1],phi[1],theta[1],q[1]=d  ,0.0  ,151/720*np.pi   ,+qeff 
+        r[1],phi[1],theta[1],q[1]=d  ,0.0  ,(151/720)*np.pi   ,+qeff 
         r[2],phi[2],theta[2],q[2]=d  ,0.0  ,((1-151/720)*np.pi) ,+qeff
 
     elif type==2: #definitions for Na+
@@ -263,3 +264,64 @@ def yieldPotlEfield(ri,qi,num_samp,start_coord,end_coord):
     return samp_x, samp_y, samp_z, samp_yy, samp_zz, samp_xx, np.array(Efield_molecule2D), np.array(potl_molecules)
 
 # samp_x, samp_y, samp_z, samp_yy, samp_zz, samp_xx, Efield_molecule2D,potl_molecules = yieldPotlEfield(13,-0.5,1.5)
+
+def test_env():
+    xa = [0] 
+    ya = [0] 
+    za = [0] 
+    thetar = [0]
+    phir = [0]
+    moltypes =[1] 
+    rall,qall = allatomposns(moltypes,xa,ya,za,phir,thetar)
+    rall = np.array(rall)*1e-9
+    print(rall,qall)
+    print('Typical value is -8.66e-19 or -8.754e-19 J.')
+    return print('Total E=', potl_energy_sum(rall,qall))
+    
+def dist_each(xyz_coord):
+    chargeadded=[] #list of indices of charges already added\
+    dis_eac = []
+    for loop in range(len(xyz_coord)): #loop over each charge in turn
+        for j in chargeadded: #loop over charges already added (bringing charge loop towards charge j)            
+            tot_value_ij=dist(xyz_coord[j],xyz_coord[loop])
+            dis_eac.append(tot_value_ij)
+        chargeadded.append(loop)
+    return dis_eac
+
+
+def plotly_6woer(rall,qall):
+    xall=[]
+    yall=[]
+    zall=[]
+    for i in range(int(len(rall))):
+        xall.append(float(rall[i][0])*1e9)
+        yall.append(float(rall[i][1])*1e9)
+        zall.append(float(rall[i][2])*1e9)
+    #print('xall:',xall)
+    this_e = "{:.3g}".format(potl_energy_sum(rall,qall))
+    print('potl_E_sum:',this_e, 'J')
+
+    #-------plot------3D-coord of the lowest E_energy-------
+    #plot the lowest E atoms posi.(interactive)
+    fig = make_subplots()
+    O_atoms = go.Scatter3d(x=xall[::3], y=yall[::3], z=zall[::3],mode='markers',marker = {'color' : 'red'},name='Oxygen Atom')
+    H_atoms01 = go.Scatter3d(x=xall[1::3], y=yall[1::3], z=zall[1::3],mode='markers',marker = {'color' : 'blue'},name='Hydrogen Atom')
+    H_atoms02 = go.Scatter3d(x=xall[2::3], y=yall[2::3], z=zall[2::3],mode='markers',marker = {'color' : 'blue'},name='Hydrogen Atom')
+
+    fig.add_trace(O_atoms)
+    fig.add_trace(H_atoms01)
+    fig.add_trace(H_atoms02)
+
+    fig.update_layout(title_text=f'molecule positions (Total energy = {this_e} J)',title_x=0.5,width=800, height=600,scene_aspectmode='cube',
+                    scene = dict(
+                    xaxis_title='x (nm)',
+                    yaxis_title='y (nm)',
+                    zaxis_title='z (nm)',
+                    xaxis = dict(nticks=10, range=[0,1],),
+                    yaxis = dict(nticks=10, range=[0,1],),
+                    zaxis = dict(nticks=10, range=[0,1],)
+                                 )
+                     )
+
+    fig.show()
+    return None
